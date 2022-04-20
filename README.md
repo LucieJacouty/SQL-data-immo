@@ -3,19 +3,19 @@
 Projet Openclassrooms formation Data Analyst
 
 
-## Création de la base donnée SQL :
+### Création de la base donnée SQL :
 
 Conceptualisation de la BD à partir des données officielles DVF  
 Réalisation d'un modèle conceptuel et schéma relationnel  
 Création des tables (avec Power Query)
 
 
-## Implémentation de la base de donnée :
+### Implémentation de la base de donnée :
 
 Testé sous SQL Server et IBM Db2
 
 
-## Réalisation de requêtes afin de répondre à différentes problématiques :
+### Réalisation de requêtes afin de répondre à différentes problématiques :
 
 1. Nombre d'appartements vendus au 1er semestre 2020
 2. Proportion des ventes d'appartements par nombre de pièces
