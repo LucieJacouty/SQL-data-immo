@@ -28,6 +28,6 @@ Testé sous SQL Server et IBM Db2
 9. Taux d'appartements vendus à un prix au m² au moins 2x plus élevé que le prix au m² moyen du département
 10. Moyenne des valeurs foncières pour le top 20 des communes
 
-
+Data : Tables format .csv et schéma relationnel de la BD  
 Requêtes SQL Server : sans commentaires  
 Requêtes IBM Db2 : avec commentaires
