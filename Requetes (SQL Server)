@@ -1,0 +1,260 @@
+1. 
+
+SELECT COUNT(*) AS 'Quantité'
+FROM [Bien]
+left join [TypeLocal] 
+on [Bien].[Code_local] = [TypeLocal].[Code_local]
+WHERE [TypeLocal].[Type_local] = 'Appartement'
+
+
+2.
+
+SELECT COUNT(*) as 'Proportion', [Nbr_pieces] as 'Nombre de pièces'
+FROM [Bien]
+left join [TypeLocal] 
+on [Bien].[Code_local] = [TypeLocal].[Code_local]
+WHERE [TypeLocal].[Type_local] = 'Appartement'
+GROUP BY [Bien].[Nbr_pieces]
+
+
+3.
+
+SELECT TOP 10 CAST(AVG([Vente].[Valeur] / [Bien].[Surface_carrez]) AS DECIMAL(15, 2)) as 'prix au m²', [Commune].[Code_dpt] as 'Département'
+from [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+left join [Commune]
+on [Bien].[Code_ID_commune] = [Commune].[Code_ID_commune]
+GROUP BY [Code_dpt]
+ORDER BY [prix au m²] desc
+
+
+4.
+
+SELECT COUNT([Bien].[ID]) as 'NB', CAST(AVG([Vente].[Valeur] / [Bien].[Surface_carrez]) AS DECIMAL(15, 2)) as 'prix au m²', [Typelocal].[Type_local]
+from [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+left join [TypeLocal] 
+on [Bien].[Code_local] = [TypeLocal].[Code_local]
+left join [Commune]
+on [Bien].[Code_ID_commune] = [Commune].[Code_ID_commune]
+WHERE [TypeLocal].[Type_local] = 'Maison'
+AND ([Commune].[Code_dpt] = '75' OR [Commune].[Code_dpt] ='77' OR [Commune].[Code_dpt] = '78' OR [Commune].[Code_dpt] = '91' OR [Commune].[Code_dpt] = '92' OR [Commune].[Code_dpt] = '93' OR [Commune].[Code_dpt] = '94' OR [Commune].[Code_dpt] = '95')
+GROUP BY [TypeLocal].[Type_local]
+
+
+5.
+
+SELECT TOP 10 [Bien].[Surface_carrez] as 'Surface en m²', CAST([Vente].[Valeur] AS INT) as 'Valeur', [Commune].[Code_dpt] as 'Departement'  
+FROM [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+left join [TypeLocal] 
+on [Bien].[Code_local] = [TypeLocal].[Code_local]
+left join [Commune]
+on [Bien].[Code_ID_commune] = [Commune].[Code_ID_commune]
+WHERE [TypeLocal].[Type_local] = 'Appartement'
+ORDER BY [Vente].[Valeur] desc
+
+
+6.
+
+WITH
+
+Ventes_T 
+AS
+
+(SELECT TOP 1
+
+(SELECT COUNT(*)
+FROM [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+WHERE [Vente].[Date] BETWEEN '2020-01-01' and '2020-03-31')
+AS 'Quantité1',
+
+(SELECT COUNT(*)
+FROM [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+WHERE [Vente].[Date] BETWEEN '2020-04-01' and '2020-06-30')
+AS 'Quantité2'
+
+FROM [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente])
+
+
+
+SELECT CAST((([Quantité2] - CAST([Quantité1] AS DECIMAL)) / [Quantité1]) * 100 AS DECIMAL(10,3)) as 'Taux evolution'
+FROM Ventes_T
+
+OR
+
+SELECT CAST((([Quantité2] - CAST([Quantité1] AS DECIMAL)) / [Quantité1]) * 100 AS DECIMAL(10,3)) as 'Taux evolution'
+FROM (SELECT TOP 1
+
+(SELECT COUNT(*)
+FROM [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+WHERE [Vente].[Date] BETWEEN '2020-01-01' and '2020-03-31')
+AS 'Quantité1',
+
+(SELECT COUNT(*)
+FROM [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+WHERE [Vente].[Date] BETWEEN '2020-04-01' and '2020-06-30')
+AS 'Quantité2'
+
+FROM [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]) AS Ventes_T
+
+
+7.
+
+WITH
+
+Ventes_T1
+AS
+
+(SELECT COUNT(*) AS 'Qt1', [Commune].[Nom_commune] AS 'Commune'
+FROM [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+LEFT JOIN [Commune]
+ON [Bien].[Code_ID_commune] = [Commune].[Code_ID_commune]
+WHERE [Vente].[Date] BETWEEN '2020-01-01' and '2020-03-31'
+GROUP BY [Nom_commune]),
+
+Ventes_T2
+AS
+
+(SELECT COUNT(*) AS 'Qt2', [Commune].[Nom_commune] as 'Commune'
+FROM [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+LEFT JOIN [Commune]
+ON [Bien].[Code_ID_commune] = [Commune].[Code_ID_commune]
+WHERE [Vente].[Date] BETWEEN '2020-04-01' and '2020-06-30'
+GROUP BY [Nom_commune]),
+
+Taux
+AS
+
+(SELECT (CAST((([Qt2] - CAST([Qt1] AS DECIMAL)) / [Qt1]) * 100 AS DECIMAL(10,3))) AS 'Taux', [Commune].[Nom_commune]
+FROM [Commune]
+LEFT JOIN [Ventes_T1] ON [Commune].[Nom_commune] = [Ventes_T1].[Commune]
+LEFT JOIN [Ventes_T2] on [Commune].[Nom_commune] = [Ventes_T2].[Commune])
+
+
+
+SELECT * FROM [Taux]
+WHERE [Taux].[Taux] > 20
+ORDER BY [Taux] desc
+
+-- Ou :
+
+SELECT DISTINCT [Taux].[Commune] FROM [Taux]
+WHERE [Taux].[Taux] > 20
+
+
+8.
+
+WITH
+
+Prix
+AS
+
+(SELECT
+
+(SELECT CAST(AVG([Vente].[Valeur] / [Bien].[Surface_carrez]) AS DECIMAL(15, 2))
+from [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+left join [TypeLocal] 
+on [Bien].[Code_local] = [TypeLocal].[Code_local]
+left join [Commune]
+on [Bien].[Code_ID_commune] = [Commune].[Code_ID_commune]
+WHERE [TypeLocal].[Type_local] = 'Appartement' AND [Bien].[Nbr_pieces] = 2)
+AS 'prix1',
+
+(SELECT CAST(AVG([Vente].[Valeur] / [Bien].[Surface_carrez]) AS DECIMAL(15, 2))
+from [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+left join [TypeLocal] 
+on [Bien].[Code_local] = [TypeLocal].[Code_local]
+left join [Commune]
+on [Bien].[Code_ID_commune] = [Commune].[Code_ID_commune]
+WHERE [TypeLocal].[Type_local] = 'Appartement' AND [Bien].[Nbr_pieces] = 3)
+AS 'prix2')
+
+
+SELECT CAST((([prix2] - CAST([prix1] AS DECIMAL)) / [prix1]) * 100 AS DECIMAL(10,3)) as 'Diff%'
+FROM Prix
+
+
+9.
+
+WITH
+
+PrixMDpt
+AS
+
+(SELECT CAST(AVG([Vente].[Valeur] / [Bien].[Surface_carrez]) AS DECIMAL(15, 2)) as 'prix m²/Dpt', [Commune].[Code_dpt] as 'Dpt'
+from [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+left join [Commune]
+on [Bien].[Code_ID_commune] = [Commune].[Code_ID_commune]
+GROUP BY [Code_dpt]),
+
+PrixM2Appt
+AS
+
+(SELECT CAST(([Vente].[Valeur] / [Bien].[Surface_carrez]) AS DECIMAL(15, 2)) as 'prix m²', [Commune].[Code_dpt] as 'Département', [Typelocal].[Type_local] as 'Type'
+from [Bien]
+left join [Vente]
+on [Bien].[ID_vente] = [Vente].[ID_vente]
+left join [TypeLocal] 
+on [Bien].[Code_local] = [TypeLocal].[Code_local]
+left join [Commune]
+on [Bien].[Code_ID_commune] = [Commune].[Code_ID_commune]
+WHERE [Type_local] = 'Appartement'),
+
+NBApptX2
+AS
+
+(SELECT
+(SELECT COUNT(*)
+FROM [Bien]
+left join [TypeLocal] 
+on [Bien].[Code_local] = [TypeLocal].[Code_local]
+WHERE [Type_local] = 'Appartement')
+as 'Total_Appt',
+
+(SELECT COUNT([PrixM2Appt].[prix m²])
+from [PrixM2Appt]
+left join [PrixMDpt] 
+on [PrixM2Appt].[Département] = [PrixMDpt].[Dpt]
+WHERE [PrixM2Appt].[prix m²] >= ([PrixMDpt].[prix m²/Dpt] * 2))
+as 'NB_Appt')
+
+
+
+SELECT CAST((CAST([NBApptX2].[NB_Appt] AS DECIMAL(10,3)) / CAST([NBApptX2].[Total_Appt] AS DECIMAL(10,3))) * 100 AS DECIMAL(10,3))
+FROM [NBApptX2]
+
+
+10.
+
+SELECT TOP 20 CAST(AVG([Vente].[Valeur]) AS DECIMAL(15,2)) as 'Valeur moyenne', [Commune].[Nom_commune] as 'Commune'
+FROM [Bien]
+left join [Vente] on [Bien].[ID_vente] = [Vente].[ID_vente]
+left join [Commune] on [Bien].[Code_ID_commune] = [Commune].[Code_ID_commune]
+GROUP BY [Nom_commune]
+ORDER BY [Valeur moyenne] desc
