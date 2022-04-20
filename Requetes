@@ -1,0 +1,268 @@
+1.
+
+-- Nombre d'appartements vendus au 1er semestre 2020
+
+
+SELECT COUNT(*) AS Quantité FROM bien
+LEFT JOIN typelocal ON bien.code_local = typelocal.code_local
+WHERE type_local = 'Appartement'
+
+
+-- Si pour 1er trimestre, rajouter:
+-- LEFT JOIN vente ON bien.id_vente = vente.id_vente
+-- AND vente.date BETWEEN '2020-01-01' AND '2020-03-31' (après WHERE)
+
+2.
+
+-- Proportion des ventes d'appartements par nombre de pièces
+
+
+WITH 
+
+TotalAppt    -- Nombre total de ventes d'appartements
+AS 
+
+(SELECT COUNT(ID) AS Qt
+FROM bien
+LEFT JOIN typelocal ON bien.code_local = typelocal.code_local
+WHERE type_local = 'Appartement'),
+
+Prp    -- Nombre de ventes d'appartements par pièce
+AS
+
+(SELECT COUNT(ID) AS Proportion, nbr_pieces
+FROM bien
+LEFT JOIN typelocal ON bien.code_local = typelocal.code_local
+WHERE type_local = 'Appartement'
+GROUP BY nbr_pieces)
+
+SELECT (Proportion/Qt) *100 AS Proportion, nbr_pieces
+FROM TotalAppt, Prp
+
+-- Proportion entre les 2 (en %)
+
+
+3.
+
+-- Liste des 10 départements où le prix au m² est le plus élevé
+
+
+SELECT CAST(AVG(valeur/surface_carrez) AS DECIMAL (10,3)) AS prix_au_m², code_dpt AS Département
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente
+LEFT JOIN commune ON bien.code_id_commune = commune.code_id_commune
+GROUP BY code_dpt
+ORDER BY prix_au_m² desc
+LIMIT 10
+
+-- Prix au m² par département, trié par ordre descendant, limité à 10
+
+4.
+
+-- Prix moyen du m² d'une maison en Ile-de-France
+
+
+SELECT CAST(AVG(valeur/surface_carrez) AS DECIMAL (10,3)) AS prix_au_m², type_local
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente
+LEFT JOIN typelocal ON bien.code_local = typelocal.code_local 
+LEFT JOIN commune ON bien.code_id_commune = commune.code_id_commune
+WHERE type_local = 'Maison' 
+AND code_dpt IN ('75', '77',  '78', '91', '92', '93', '94', '95')
+GROUP BY type_local
+
+5.
+
+-- Liste des 10 appartements les plus chers (avec département et nombre de m²)
+
+
+SELECT surface_carrez AS Surface_en_m², valeur AS Valeur, code_dpt AS Département
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente
+LEFT JOIN typelocal ON bien.code_local = typelocal.code_local
+LEFT JOIN commune ON bien.code_id_commune = commune.code_id_commune
+WHERE type_local = 'Appartement'
+ORDER BY valeur DESC
+LIMIT 10
+
+-- Appartements triés par valeur, par ordre descendant, limité à 10 (faisant apparaître la superficie et le département)
+
+6.
+
+-- Taux d'évolution du nombre de ventes entre le 1er trimestre et le 2e trimestre 2020
+
+
+WITH 
+Ventes_T
+AS 
+
+(SELECT 
+
+(SELECT COUNT(*)    -- Ventes pour le 1er trimestre 2020
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente 
+WHERE vente.date BETWEEN '2020-01-01'AND '2020-03-31')
+AS Qt1,
+
+(SELECT COUNT(*)    -- Ventes pour le 2e trimestre 2020
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente 
+WHERE vente.date BETWEEN '2020-04-01' AND '2020-06-30')
+AS Qt2
+
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente 
+LIMIT 1)
+
+
+SELECT ((Qt2 - Qt1 )/ Qt1) * 100 AS Taux_evolution
+FROM Ventes_T
+
+-- Calcul du taux d'évolution entre les 2
+
+
+7.
+
+-- Liste des communes où le taux d'évolution des ventes entre le 1er et 2e trimestre 2020 est supérieur à 20% 
+
+
+WITH 
+Ventes_T1    -- Ventes du 1er trimeste 2020 par communes
+AS 
+
+(SELECT COUNT(*) AS Qt1, commune.nom_commune
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente 
+LEFT JOIN commune ON bien.code_id_commune = commune.code_id_commune 
+WHERE vente.date BETWEEN '2020-01-01'AND '2020-03-31'
+GROUP BY commune.nom_commune),
+
+Ventes_T2    -- Ventes du 2e trimeste 2020 par communes
+AS
+
+(SELECT COUNT(*) AS Qt2, commune.nom_commune
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente 
+LEFT JOIN commune ON bien.code_id_commune = commune.code_id_commune
+WHERE vente.date BETWEEN '2020-04-01' AND '2020-06-30'
+GROUP BY commune.nom_commune),
+
+Taux    -- Calcul du taux d'évolution par communes 
+AS
+
+(SELECT ((Qt2 - Qt1 )/ Qt1) * 100 AS Taux_évolution, commune.nom_commune AS Commune
+FROM commune
+LEFT JOIN Ventes_T1 ON commune.nom_commune = Ventes_T1.nom_commune 
+LEFT JOIN Ventes_T2 ON commune.nom_commune = Ventes_T2.nom_commune)
+
+
+
+SELECT Taux_évolution, Commune
+FROM Taux
+WHERE Taux_évolution > 20
+GROUP BY Commune, Taux_évolution
+ORDER BY Taux_évolution desc
+
+-- Sélection des communes (distinctes) dont le taux est supérieur à 20%
+
+8.
+
+-- Différence en % du prix au m² entre un appartement de 2 pièces et un appartement de 3 pièces
+
+
+WITH
+ 
+Prix
+AS 
+
+(SELECT 
+
+(SELECT CAST(AVG(valeur/surface_carrez) AS DECIMAL (15,2))    -- Prix moyen au m² d'un appartement de 2 pièces
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente
+LEFT JOIN typelocal ON bien.code_local = typelocal.code_local
+WHERE type_local = 'Appartement' AND nbr_pieces = 2)
+AS prix1,
+
+(SELECT CAST(AVG(valeur/surface_carrez) AS DECIMAL (15,2))    -- Prix moyen au m² d'un appartement de 3 pièces
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente
+LEFT JOIN typelocal ON bien.code_local = typelocal.code_local
+WHERE type_local = 'Appartement' AND nbr_pieces = 3)
+AS prix2
+
+FROM bien
+LIMIT 1)
+
+
+SELECT ((prix2 - prix1) / prix1) * 100 AS Diff
+FROM Prix
+
+-- Calcul de la différence en % entre les 2
+
+
+9.
+
+-- Taux d'appartements vendus à un prix au m² au moins 2x plus élevé que le prix au m² moyen du département
+
+
+WITH
+ 
+PrixMDpt   --Prix moyen du m² au Département
+AS 
+
+(SELECT AVG(valeur/surface_carrez) AS prix_m²_Dpt, code_dpt
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente 
+LEFT JOIN commune ON bien.code_id_commune = commune.code_id_commune
+GROUP BY code_dpt),
+
+Prixm2Appt   -- Prix m² de chaque appartement
+AS 
+
+(SELECT valeur/surface_carrez AS prix_m², code_dpt, type_local
+FROM bien
+LEFT JOIN vente ON bien.id_vente = vente.id_vente 
+LEFT JOIN typelocal ON bien.code_local = typelocal.code_local
+LEFT JOIN commune ON bien.code_id_commune = commune.code_id_commune
+WHERE type_local = 'Appartement'),
+
+NBAppt
+AS 
+
+(SELECT 
+(SELECT COUNT(*)
+FROM bien
+LEFT JOIN typelocal ON bien.code_local = typelocal.code_local
+WHERE type_local = 'Appartement')
+AS Total_Appt,   -- Total d'appartement
+
+(SELECT COUNT(prix_m²)
+FROM Prixm2Appt
+LEFT JOIN PrixMDpt ON Prixm2Appt.code_dpt = PrixMDpt.code_dpt
+WHERE prix_m² >= prix_m²_Dpt * 2)
+AS NB_Appt   -- Nombre d'appartements au moins 2x plus chère que le prix au m² du Département
+
+FROM bien)
+
+
+SELECT NB_Appt/Total_Appt * 100 AS Taux
+FROM NBAppt
+LIMIT 1
+
+-- Calcul du taux en %
+
+
+
+10. 
+
+-- Moyenne des valeurs foncières pour le top 20 des communes
+
+
+SELECT CAST(AVG(valeur) AS DECIMAL (15,2)) as Moyenne, nom_commune AS Commune
+FROM bien
+LEFT JOIN  vente ON bien.id_vente = vente.id_vente
+LEFT JOIN commune ON bien.code_id_commune = commune.code_id_commune
+GROUP BY nom_commune
+ORDER BY Moyenne desc
+LIMIT 20
