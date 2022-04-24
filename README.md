@@ -3,7 +3,7 @@
 Projet Openclassrooms formation Data Analyst
 
 
-### Création de la base donnée SQL :
+### Création de la base donnée :
 
 Conceptualisation de la BD à partir des données officielles DVF  
 Réalisation d'un modèle conceptuel et schéma relationnel  
