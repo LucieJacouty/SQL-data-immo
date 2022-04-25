@@ -2,7 +2,7 @@
 
 Projet Openclassrooms - Formation Data Analyst  
 
-But : création d'une base de données qui doit permettre de collecter les transactions immobilières et foncières en France.  
+Objectif : création d'une base de données qui doit permettre de collecter les transactions immobilières et foncières en France.  
 
 Déroulement : 
 - Conceptualisation de la base de données
