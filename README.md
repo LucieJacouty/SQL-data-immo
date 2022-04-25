@@ -2,12 +2,18 @@
 
 Projet Openclassrooms - Formation Data Analyst  
 
+
 Objectif : création d'une base de données qui doit permettre de collecter les transactions immobilières et foncières en France.  
 
 Déroulement : 
 - Conceptualisation de la base de données
 - Implémentation de la base de données
 - Faire des premières analyses avec SQL
+
+Contenu : 
+- Data : Tables format .csv et schéma relationnel de la BD  
+- Requêtes SQL Server : sans commentaires  
+- Requêtes IBM Db2 : avec commentaires
 
 
 ### Création de la base donnée :
