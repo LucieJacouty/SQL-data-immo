@@ -1,6 +1,13 @@
 # Création et gestion d'une base de données SQL
 
-Projet Openclassrooms formation Data Analyst
+Projet Openclassrooms - Formation Data Analyst  
+
+But : création d'une base de données qui doit permettre de collecter les transactions immobilières et foncières en France.  
+
+Déroulement : 
+- Conceptualisation de la base de données
+- Implémentation de la base de données
+- Faire des premières analyses avec SQL
 
 
 ### Création de la base donnée :
